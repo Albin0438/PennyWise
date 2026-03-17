@@ -47,11 +47,12 @@ class ExpenseApp:
         from tkinter import ttk
 
         # Table
-        self.tree = ttk.Treeview(self.root, columns=("Title", "Amount", "Category"), show="headings")
+        self.tree = ttk.Treeview(self.root, columns=("Title", "Amount", "Category", "Date"), show="headings")
 
         self.tree.heading("Title", text="Title")
         self.tree.heading("Amount", text="Amount")
         self.tree.heading("Category", text="Category")
+        self.tree.heading("Date", text="Date")
 
         self.tree.pack(pady=20, fill="both", expand=True)
 
@@ -61,6 +62,13 @@ class ExpenseApp:
             command=self.delete_selected
         )
         delete_btn.pack(pady=5)
+
+        graph_btn = tk.Button(
+            self.root,
+            text="Show Graph 📊",
+            command=self.show_graph
+        )
+        graph_btn.pack(pady=5)
 
         self.total_label = tk.Label(self.root, text="Total: ₹0", font=("Arial", 12, "bold"))
         self.total_label.pack(pady=10)
@@ -99,7 +107,16 @@ class ExpenseApp:
         for row in data:
             if category_filter != "All" and row[3] != category_filter:
                 continue
-            self.tree.insert("", "end", values=(row[1], f"₹{row[2]}", row[3]))
+            
+            from datetime import datetime
+
+            formatted_date = datetime.strptime(row[4], "%Y-%m-%d").strftime("%d-%m-%Y")
+
+            self.tree.insert(
+                "",
+                "end",
+                values=(row[1], f"₹{row[2]}", row[3], formatted_date)
+            )
             total += row[2]
 
         self.total_label.config(text=f"Total: ₹{total}")
@@ -147,3 +164,36 @@ class ExpenseApp:
             self.insight_label.config(text=f"Top spending category: {top_category} (₹{category_totals[top_category]})")
         else:
             self.insight_label.config(text="")
+
+    def show_graph(self):
+        import matplotlib.pyplot as plt
+        from collections import defaultdict
+        from datetime import datetime
+
+        data = get_transactions()
+
+        daily_totals = defaultdict(float)
+
+        for row in data:
+            date = row[4]
+            amount = row[2]
+
+            # convert to datetime object
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+            daily_totals[date_obj] += amount
+
+        # sort properly
+        dates = sorted(daily_totals.keys())
+        amounts = [daily_totals[d] for d in dates]
+
+        # convert back to readable format
+        labels = [d.strftime("%d-%m") for d in dates]
+
+        plt.figure()
+        plt.plot(labels, amounts, marker='o')
+        plt.title("Spending Over Time")
+        plt.xlabel("Date")
+        plt.ylabel("Amount (₹)")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
