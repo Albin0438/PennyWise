@@ -49,23 +49,14 @@ def get_transactions():
     conn.close()
     return data
 
-<<<<<<< HEAD
-def delete_transaction(title, amount, category):
-    import sqlite3
-=======
+
 def delete_transaction(title, amount, category, date):
->>>>>>> 0801b61 (Push from new OS)
-    conn = sqlite3.connect("expenses.db")
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-<<<<<<< HEAD
-        "DELETE FROM transactions WHERE title=? AND amount=? AND category=?",
-        (title, amount, category)
-=======
         "DELETE FROM transactions WHERE title=? AND amount=? AND category=? AND date=?",
         (title, amount, category, date)
->>>>>>> 0801b61 (Push from new OS)
     )
 
     conn.commit()

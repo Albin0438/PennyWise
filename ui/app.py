@@ -232,8 +232,6 @@ class ExpenseApp:
                 self.progress.configure(style="yellow.Horizontal.TProgressbar")
             else:
                 self.progress.configure(style="red.Horizontal.TProgressbar")
-<<<<<<< HEAD
-=======
 
             if not hasattr(self, "budget_warning_shown"):
                 self.budget_warning_shown = False
@@ -248,8 +246,6 @@ class ExpenseApp:
 
             elif percent < 100:
                 self.budget_warning_shown = False
-
->>>>>>> 0801b61 (Push from new OS)
         else:
             self.progress["value"] = 0
 
@@ -257,18 +253,6 @@ class ExpenseApp:
         selected = self.tree.selection()
 
         if not selected:
-<<<<<<< HEAD
-            return
-
-        item = self.tree.item(selected[0])
-        title, amount, category = item["values"]
-
-        # Remove ₹ symbol
-        amount = float(str(amount).replace("₹", ""))
-
-        from core.database import delete_transaction
-        delete_transaction(title, amount, category)
-=======
             from tkinter import messagebox
             messagebox.showwarning("No selection", "Please select a row")
             return
@@ -285,7 +269,6 @@ class ExpenseApp:
 
         from core.database import delete_transaction
         delete_transaction(title, amount, category, date)
->>>>>>> 0801b61 (Push from new OS)
 
         self.load_data()
 
@@ -323,15 +306,11 @@ class ExpenseApp:
 
         if category_totals:
             top_category = max(category_totals, key=category_totals.get)
-<<<<<<< HEAD
-            self.insight_label.config(text=f"Top spending category: {top_category} (₹{category_totals[top_category]})")
-=======
             remaining = self.budget - total if hasattr(self, "budget") else 0
 
             self.insight_label.config(
                 text=f"Top: {top_category} | Remaining: ₹{remaining}"
             )
->>>>>>> 0801b61 (Push from new OS)
         else:
             self.insight_label.config(text="")
 
@@ -437,6 +416,22 @@ class ExpenseApp:
     def reload_theme(self):
         self.root.configure(bg=self.BG)
 
+        style = ttk.Style()
+        style.theme_use("default")
+
+        style.configure(
+            "Treeview.Heading",
+            background=self.BG,
+            foreground=self.FG
+        )
+
+        style.configure(
+            "Treeview",
+            background=self.BG,
+            foreground=self.FG,
+            fieldbackground=self.BG
+        )
+
         for widget in self.root.winfo_children():
             if isinstance(widget, tk.Frame):
                 widget.configure(bg=self.BG)
@@ -451,6 +446,15 @@ class ExpenseApp:
 
         self.total_label.configure(bg=self.BG, fg=self.FG)
         self.insight_label.configure(bg=self.BG, fg=self.FG)
-        for col in self.tree["columns"]:
-            self.tree.heading(col, background=self.BG, foreground=self.FG)
-        self.tree.configure(background=self.ENTRY_BG, foreground=self.FG)
+
+        self.tree.configure(
+            background=self.ENTRY_BG,
+            foreground=self.FG,
+            fieldbackground=self.ENTRY_BG
+        )
+
+        style.map(
+            "Treeview",
+            background=[("selected", self.ACCENT)],
+            foreground=[("selected", "black")]
+        )
