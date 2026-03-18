@@ -232,6 +232,24 @@ class ExpenseApp:
                 self.progress.configure(style="yellow.Horizontal.TProgressbar")
             else:
                 self.progress.configure(style="red.Horizontal.TProgressbar")
+<<<<<<< HEAD
+=======
+
+            if not hasattr(self, "budget_warning_shown"):
+                self.budget_warning_shown = False
+
+            if percent >= 100 and not self.budget_warning_shown:
+                from tkinter import messagebox
+                messagebox.showwarning(
+                    "Budget Exceeded",
+                    f"⚠️ Budget exceeded!\nTotal: ₹{total} / Budget: ₹{self.budget}"
+                )
+                self.budget_warning_shown = True
+
+            elif percent < 100:
+                self.budget_warning_shown = False
+
+>>>>>>> 0801b61 (Push from new OS)
         else:
             self.progress["value"] = 0
 
@@ -239,6 +257,7 @@ class ExpenseApp:
         selected = self.tree.selection()
 
         if not selected:
+<<<<<<< HEAD
             return
 
         item = self.tree.item(selected[0])
@@ -249,6 +268,24 @@ class ExpenseApp:
 
         from core.database import delete_transaction
         delete_transaction(title, amount, category)
+=======
+            from tkinter import messagebox
+            messagebox.showwarning("No selection", "Please select a row")
+            return
+
+        item = self.tree.item(selected[0])
+        title, amount, category, date = item["values"]
+
+        # Clean amount
+        amount = float(str(amount).replace("₹", ""))
+
+        # Convert date back to DB format
+        from datetime import datetime
+        date = datetime.strptime(date, "%d-%m-%Y").strftime("%Y-%m-%d")
+
+        from core.database import delete_transaction
+        delete_transaction(title, amount, category, date)
+>>>>>>> 0801b61 (Push from new OS)
 
         self.load_data()
 
@@ -286,7 +323,15 @@ class ExpenseApp:
 
         if category_totals:
             top_category = max(category_totals, key=category_totals.get)
+<<<<<<< HEAD
             self.insight_label.config(text=f"Top spending category: {top_category} (₹{category_totals[top_category]})")
+=======
+            remaining = self.budget - total if hasattr(self, "budget") else 0
+
+            self.insight_label.config(
+                text=f"Top: {top_category} | Remaining: ₹{remaining}"
+            )
+>>>>>>> 0801b61 (Push from new OS)
         else:
             self.insight_label.config(text="")
 
