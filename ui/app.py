@@ -3,6 +3,7 @@ from tkinter import ttk
 from datetime import datetime
 from ui.transaction_form import TransactionForm
 from core.database import get_transactions
+from utils.backup import backup_database
 
 class ExpenseApp:
     BG = "#1e1e1e"
@@ -71,6 +72,28 @@ class ExpenseApp:
             if text == "Switch to Light Mode":
                 self.toggle_btn = btn
 
+        backup_btn = tk.Button(
+            button_frame,
+            text="Backup Data 💾",
+            command=backup_database,
+            bg=self.ACCENT,
+            fg="black",
+            relief="flat"
+        )
+        backup_btn.pack(side="top", pady=5)
+        self.style_button(backup_btn)
+
+        restore_btn = tk.Button(
+            button_frame,
+            text="Restore Backup ♻️",
+            command=self.restore_database,
+            bg=self.ACCENT,
+            fg="black",
+            relief="flat"
+        )
+        restore_btn.pack(side="top", pady=5)
+        self.style_button(restore_btn)
+
         # Bar Chart button
         bar_btn = tk.Button(button_frame, text="Bar Chart 📊", command=self.show_bar_chart, bg=self.ACCENT, fg="black", relief="flat")
         bar_btn.pack(side="top", pady=5)
@@ -113,6 +136,13 @@ class ExpenseApp:
         tk.Label(self.main_frame, text="Budget Usage", bg=self.BG, fg=self.FG).pack()
         self.progress = ttk.Progressbar(self.main_frame, orient="horizontal", length=300, mode="determinate")
         self.progress.pack(pady=5)
+
+        tk.Label(
+            self.main_frame,
+            text="⚠️ After restoring backup, restart the app",
+            bg=self.BG,
+            fg="orange"
+        ).pack()
 
         self.load_data()
 
@@ -463,3 +493,26 @@ class ExpenseApp:
         plt.pie(amounts, labels=categories, autopct='%1.1f%%', startangle=140)
         plt.title("Expenses Distribution")
         plt.show()
+
+    def restore_database(self):
+        import shutil
+        from tkinter import filedialog, messagebox
+
+        db_file = "pennywise.db"
+
+        file_path = filedialog.askopenfilename(
+            filetypes=[("Database Files", "*.db")],
+            title="Select Backup File"
+        )
+
+        if not file_path:
+            return
+
+        try:
+            shutil.copy(file_path, db_file)
+            messagebox.showinfo(
+                "Success",
+                "Database restored!\n⚠️ Please restart the app."
+            )
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
