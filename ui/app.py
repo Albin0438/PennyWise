@@ -4,6 +4,7 @@ from datetime import datetime
 from ui.transaction_form import TransactionForm
 from core.database import get_transactions
 from utils.backup import backup_database
+from utils.backup import backup_database, restore_database
 
 class ExpenseApp:
     BG = "#1e1e1e"
@@ -86,7 +87,7 @@ class ExpenseApp:
         restore_btn = tk.Button(
             button_frame,
             text="Restore Backup ♻️",
-            command=self.restore_database,
+            command=restore_database,   # ✅ fixed
             bg=self.ACCENT,
             fg="black",
             relief="flat"
