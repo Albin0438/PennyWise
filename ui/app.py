@@ -6,6 +6,9 @@ from core.database import get_transactions
 from utils.backup import backup_database
 from utils.backup import backup_database, restore_database
 
+from utils.csv_handler import import_csv
+from tkinter import filedialog, messagebox
+
 class ExpenseApp:
     BG = "#1e1e1e"
     FG = "#ffffff"
@@ -104,6 +107,7 @@ class ExpenseApp:
         tk.Label(self.sidebar, text="Data Management", bg=self.BG, fg=self.FG).pack(pady=10)
 
         for text, cmd in [
+            ("Import Data (CSV)", self.import_csv_ui),   # ✅ ADD THIS LINE
             ("Export CSV", self.export_csv),
             ("Backup", backup_database),
             ("Restore", restore_database),
@@ -641,3 +645,20 @@ class ExpenseApp:
             )
         except Exception as e:
             messagebox.showerror("Error", str(e))
+
+    def import_csv_ui(self):
+        file_path = filedialog.askopenfilename(
+            filetypes=[("CSV Files", "*.csv")]
+        )
+
+        if file_path:
+            try:
+                inserted, skipped = import_csv(file_path)
+
+                messagebox.showinfo(
+                    "Import Complete",
+                    f"Inserted: {inserted}\nSkipped (duplicates): {skipped}"
+                )
+                self.load_data()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
