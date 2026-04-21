@@ -16,134 +16,166 @@ class ExpenseApp:
         # ===== Root window =====
         self.root = tk.Tk()
         self.root.title("PennyWise 💰")
-        self.root.geometry("800x600")
+        self.root.geometry("900x600")
         self.root.configure(bg=self.BG)
 
         style = ttk.Style()
         style.theme_use("default")
-        style.configure("Treeview", background=self.ENTRY_BG, foreground=self.FG, fieldbackground=self.ENTRY_BG, rowheight=25)
+
+        style.configure("Treeview", background=self.ENTRY_BG, foreground=self.FG,
+                        fieldbackground=self.ENTRY_BG, rowheight=25)
         style.map("Treeview", background=[("selected", self.ACCENT)])
 
-        style.configure("green.Horizontal.TProgressbar", foreground="green", background="green")
-        style.configure("yellow.Horizontal.TProgressbar", foreground="orange", background="orange")
-        style.configure("red.Horizontal.TProgressbar", foreground="red", background="red")
+        style.configure("green.Horizontal.TProgressbar", background="green")
+        style.configure("yellow.Horizontal.TProgressbar", background="orange")
+        style.configure("red.Horizontal.TProgressbar", background="red")
 
-        # ===== Main Frame =====
+        # ===== Main Layout =====
         self.main_frame = tk.Frame(self.root, bg=self.BG)
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self.main_frame.pack(fill="both", expand=True)
 
-        # ===== Top Frame (controls) =====
-        top_frame = tk.Frame(self.main_frame, bg=self.BG)
+        # Sidebar (LEFT)
+        self.sidebar = tk.Frame(self.main_frame, bg=self.BG, width=200)
+        self.sidebar.pack(side="left", fill="y")
+
+        # Content (RIGHT)
+        self.content = tk.Frame(self.main_frame, bg=self.BG)
+        self.content.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+        # ===== TOP (Search + Filter) =====
+        top_frame = tk.Frame(self.content, bg=self.BG)
         top_frame.pack(fill="x")
 
-        # Search Frame
+        # Search
         search_frame = tk.Frame(top_frame, bg=self.BG)
-        search_frame.pack(side="top", anchor="w", pady=5)
+        search_frame.pack(anchor="w", pady=5)
+
         tk.Label(search_frame, text="Search:", bg=self.BG, fg=self.FG).pack(side="left")
         self.search_entry = tk.Entry(search_frame, bg=self.ENTRY_BG, fg=self.FG, insertbackground=self.FG)
         self.search_entry.pack(side="left", padx=5)
         self.search_entry.bind("<KeyRelease>", self.live_search)
-        tk.Button(search_frame, text="Go", command=self.search_data, bg=self.ACCENT, fg="black", relief="flat").pack(side="left")
 
-        # Filter Frame
+        tk.Button(search_frame, text="Go", command=self.search_data,
+                bg=self.ACCENT, fg="black").pack(side="left")
+
+        # Filter
+        filter_frame = tk.Frame(top_frame, bg=self.BG)
+        filter_frame.pack(anchor="w", pady=5)
+
         categories = ["All", "Food", "Transport", "Shopping", "Other"]
         self.category_var = tk.StringVar(value="All")
-        filter_frame = tk.Frame(top_frame, bg=self.BG)
-        filter_frame.pack(side="top", anchor="w", pady=5)
+
         tk.Label(filter_frame, text="Filter Category:", bg=self.BG, fg=self.FG).pack(side="left")
-        menu = tk.OptionMenu(filter_frame, self.category_var, *categories, command=lambda e: self.load_data())
-        menu.config(bg=self.ENTRY_BG, fg=self.FG, activebackground=self.ACCENT)
+
+        menu = tk.OptionMenu(filter_frame, self.category_var, *categories,
+                            command=lambda e: self.load_data())
+        menu.config(bg=self.ENTRY_BG, fg=self.FG)
         menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
         menu.pack(side="left")
 
-        # Buttons Frame
-        button_frame = tk.Frame(top_frame, bg=self.BG)
-        button_frame.pack(side="top", pady=10)
+        # ===== SIDEBAR BUTTONS =====
         self.theme = "dark"
+
+        # --- Data ---
+        tk.Label(self.sidebar, text="Data", bg=self.BG, fg=self.FG).pack(pady=5)
+
         for text, cmd in [
             ("Add Expense", self.add_expense),
-            ("Switch to Light Mode", self.toggle_theme),
             ("Delete Selected", self.delete_selected),
-            ("Show Graph 📊", self.show_graph),
-            ("Export to CSV 📁", self.export_csv)
         ]:
-            btn = tk.Button(button_frame, text=text, command=cmd, bg=self.ACCENT, fg="black", relief="flat")
-            btn.pack(side="top", pady=5)
+            btn = tk.Button(self.sidebar, text=text, command=cmd, bg=self.ACCENT)
+            btn.pack(fill="x", padx=10, pady=2)
             self.style_button(btn)
-            if text == "Switch to Light Mode":
-                self.toggle_btn = btn
 
-        backup_btn = tk.Button(
-            button_frame,
-            text="Backup Data 💾",
-            command=backup_database,
-            bg=self.ACCENT,
-            fg="black",
-            relief="flat"
-        )
-        backup_btn.pack(side="top", pady=5)
-        self.style_button(backup_btn)
+        # --- Analytics ---
+        tk.Label(self.sidebar, text="Analytics", bg=self.BG, fg=self.FG).pack(pady=10)
 
-        restore_btn = tk.Button(
-            button_frame,
-            text="Restore Backup ♻️",
-            command=restore_database,   # ✅ fixed
-            bg=self.ACCENT,
-            fg="black",
-            relief="flat"
-        )
-        restore_btn.pack(side="top", pady=5)
-        self.style_button(restore_btn)
+        for text, cmd in [
+            ("Line Graph 📊", self.show_graph),
+            ("Bar Chart 📊", self.show_bar_chart),
+            ("Pie Chart 🥧", self.show_pie_chart),
+            ("Timeline 📈", self.show_timeline_chart),
+        ]:
+            btn = tk.Button(self.sidebar, text=text, command=cmd, bg=self.ACCENT)
+            btn.pack(fill="x", padx=10, pady=2)
+            self.style_button(btn)
 
-        # Bar Chart button
-        bar_btn = tk.Button(button_frame, text="Bar Chart 📊", command=self.show_bar_chart, bg=self.ACCENT, fg="black", relief="flat")
-        bar_btn.pack(side="top", pady=5)
-        self.style_button(bar_btn)
+        # --- Data Management ---
+        tk.Label(self.sidebar, text="Data Management", bg=self.BG, fg=self.FG).pack(pady=10)
 
-        # Pie Chart button
-        pie_btn = tk.Button(button_frame, text="Pie Chart 🥧", command=self.show_pie_chart, bg=self.ACCENT, fg="black", relief="flat")
-        pie_btn.pack(side="top", pady=5)
-        self.style_button(pie_btn)
+        for text, cmd in [
+            ("Export CSV", self.export_csv),
+            ("Backup", backup_database),
+            ("Restore", restore_database),
+        ]:
+            btn = tk.Button(self.sidebar, text=text, command=cmd, bg=self.ACCENT)
+            btn.pack(fill="x", padx=10, pady=2)
+            self.style_button(btn)
 
-        # ===== Treeview Frame =====
-        tree_frame = tk.Frame(self.main_frame, bg=self.BG)
-        tree_frame.pack(fill="both", expand=True, pady=10)
+        # --- Settings ---
+        tk.Label(self.sidebar, text="Settings", bg=self.BG, fg=self.FG).pack(pady=10)
 
-        self.tree = ttk.Treeview(tree_frame, columns=("Title", "Amount", "Category", "Date"), show="headings")
+        self.toggle_btn = tk.Button(self.sidebar, text="Toggle Theme",
+                                    command=self.toggle_theme, bg=self.ACCENT)
+        self.toggle_btn.pack(fill="x", padx=10, pady=2)
+        self.style_button(self.toggle_btn)
+
+        # ===== TABLE =====
+        tree_frame = tk.Frame(self.content, bg=self.BG)
+        tree_frame.pack(fill="both", expand=True)
+
+        self.tree = ttk.Treeview(tree_frame,
+                                columns=("Title", "Amount", "Category", "Date"),
+                                show="headings")
+
         for col in ("Title", "Amount", "Category", "Date"):
             self.tree.heading(col, text=col)
+
         self.tree.pack(side="left", fill="both", expand=True)
 
-        scrollbar = tk.Scrollbar(tree_frame, orient="vertical", command=self.tree.yview)
+        scrollbar = tk.Scrollbar(tree_frame, command=self.tree.yview)
         scrollbar.pack(side="right", fill="y")
         self.tree.configure(yscrollcommand=scrollbar.set)
 
-        # ===== Total + Insight =====
-        info_frame = tk.Frame(self.main_frame, bg=self.BG)
-        info_frame.pack(pady=10)
-        self.total_label = tk.Label(info_frame, text="Total: ₹0", bg=self.BG, fg=self.FG, font=("Arial", 12, "bold"))
+        # ===== INFO =====
+        info_frame = tk.Frame(self.content, bg=self.BG)
+        info_frame.pack(pady=5)
+
+        self.total_label = tk.Label(info_frame, text="Total: ₹0",
+                                    bg=self.BG, fg=self.FG, font=("Arial", 12, "bold"))
         self.total_label.pack()
-        self.insight_label = tk.Label(info_frame, text="", bg=self.BG, fg=self.FG, font=("Arial", 12))
+
+        self.insight_label = tk.Label(info_frame, text="",
+                                    bg=self.BG, fg=self.FG)
         self.insight_label.pack()
 
-        # ===== Budget + Progress =====
-        budget_frame = tk.Frame(self.main_frame, bg=self.BG)
+        # ===== BUDGET =====
+        budget_frame = tk.Frame(self.content, bg=self.BG)
         budget_frame.pack(pady=5)
-        tk.Label(budget_frame, text="Monthly Budget:", bg=self.BG, fg=self.FG).pack(side="left")
-        self.budget_entry = tk.Entry(budget_frame, bg=self.ENTRY_BG, fg=self.FG, insertbackground=self.FG)
-        self.budget_entry.pack(side="left", padx=5)
-        tk.Button(budget_frame, text="Set", command=self.set_budget, bg=self.ACCENT, fg="black", relief="flat").pack(side="left")
 
-        tk.Label(self.main_frame, text="Budget Usage", bg=self.BG, fg=self.FG).pack()
-        self.progress = ttk.Progressbar(self.main_frame, orient="horizontal", length=300, mode="determinate")
+        tk.Label(budget_frame, text="Monthly Budget:",
+                bg=self.BG, fg=self.FG).pack(side="left")
+
+        self.budget_entry = tk.Entry(budget_frame,
+                                    bg=self.ENTRY_BG, fg=self.FG,
+                                    insertbackground=self.FG)
+        self.budget_entry.pack(side="left", padx=5)
+
+        tk.Button(budget_frame, text="Set",
+                command=self.set_budget, bg=self.ACCENT).pack(side="left")
+
+        tk.Label(self.content, text="Budget Usage",
+                bg=self.BG, fg=self.FG).pack()
+
+        self.progress = ttk.Progressbar(self.content,
+                                    orient="horizontal",
+                                    length=300,
+                                    mode="determinate")
         self.progress.pack(pady=5)
 
-        tk.Label(
-            self.main_frame,
-            text="⚠️ After restoring backup, restart the app",
-            bg=self.BG,
-            fg="orange"
-        ).pack()
+        tk.Label(self.content,
+                text="⚠️ After restoring backup, restart the app",
+                bg=self.BG, fg="orange").pack()
 
         self.load_data()
 
@@ -227,7 +259,12 @@ class ExpenseApp:
             messagebox.showwarning("No selection", "Please select a row")
             return
 
-        item = self.tree.item(selected[0])
+        item_id = selected[0]
+
+        # 👉 Get index BEFORE deleting
+        index = self.tree.index(item_id)
+
+        item = self.tree.item(item_id)
         title, amount, category, date = item["values"]
 
         # Clean amount
@@ -240,7 +277,24 @@ class ExpenseApp:
         from core.database import delete_transaction
         delete_transaction(title, amount, category, date)
 
+        # Reload data
         self.load_data()
+
+        # 👉 Get all items after reload
+        items = self.tree.get_children()
+
+        if not items:
+            return
+
+        # 👉 Select next item (or previous if last was deleted)
+        if index < len(items):
+            next_item = items[index]
+        else:
+            next_item = items[-1]
+
+        self.tree.selection_set(next_item)
+        self.tree.focus(next_item)
+        self.tree.see(next_item)
 
     def search_data(self):
         query = self.search_entry.get().lower()
@@ -382,12 +436,47 @@ class ExpenseApp:
 
         # Refresh all widgets
         self.reload_theme()
+        self.root.update_idletasks()
+
+    def apply_theme_recursive(self, widget):
+        try:
+            if isinstance(widget, tk.Frame):
+                widget.configure(bg=self.BG)
+
+            elif isinstance(widget, tk.Label):
+                widget.configure(bg=self.BG, fg=self.FG)
+
+            elif isinstance(widget, tk.Entry):
+                widget.configure(bg=self.ENTRY_BG, fg=self.FG, insertbackground=self.FG)
+
+            elif isinstance(widget, tk.Button):
+                if widget == self.toggle_btn:
+                    return
+                hover_color = "#00cfd5" if self.theme == "dark" else "#00adb5"
+                widget.configure(bg=self.ACCENT, fg="black", activebackground=hover_color)
+                widget.bind("<Enter>", lambda e, b=widget: b.config(bg=hover_color))
+                widget.bind("<Leave>", lambda e, b=widget: b.config(bg=self.ACCENT))
+
+            elif isinstance(widget, tk.OptionMenu):
+                widget.configure(bg=self.ENTRY_BG, fg=self.FG, activebackground=self.ACCENT)
+                widget["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
+
+            elif isinstance(widget, tk.Scrollbar):
+                widget.configure(bg=self.BG)
+
+        except:
+            pass
+
+        # 🔁 RECURSION (this is the magic)
+        for child in widget.winfo_children():
+            self.apply_theme_recursive(child)
 
     def reload_theme(self):
-        # Update scrollable frame background
+        # ✅ Root + main backgrounds (fixes edges issue)
+        self.root.configure(bg=self.BG)
         self.main_frame.configure(bg=self.BG)
 
-        # Update ttk styles
+        # ===== ttk styles =====
         style = ttk.Style()
         style.theme_use("default")
 
@@ -399,50 +488,41 @@ class ExpenseApp:
             fieldbackground=self.ENTRY_BG,
             rowheight=25
         )
+
         style.configure(
             "Treeview.Heading",
             background=self.BG,
             foreground=self.FG
         )
+
         style.map(
             "Treeview",
             background=[("selected", self.ACCENT)],
             foreground=[("selected", "black")]
         )
 
-        # Progress bars
-        style.configure("green.Horizontal.TProgressbar", foreground="green", background="green")
-        style.configure("yellow.Horizontal.TProgressbar", foreground="orange", background="orange")
-        style.configure("red.Horizontal.TProgressbar", foreground="red", background="red")
+        # ✅ Fix Progressbar (IMPORTANT)
+        style.configure(
+            "Horizontal.TProgressbar",
+            troughcolor=self.ENTRY_BG,
+            background="green"
+        )
 
-        # Dynamic hover color based on theme
-        hover_color = "#00cfd5" if self.theme == "dark" else "#00adb5"
+        style.configure("green.Horizontal.TProgressbar", background="green")
+        style.configure("yellow.Horizontal.TProgressbar", background="orange")
+        style.configure("red.Horizontal.TProgressbar", background="red")
 
-        # Update all children widgets
-        for widget in self.main_frame.winfo_children():
-            if isinstance(widget, tk.Frame):
-                widget.configure(bg=self.BG)
-                for child in widget.winfo_children():
-                    if isinstance(child, tk.Label):
-                        child.configure(bg=self.BG, fg=self.FG)
-                    elif isinstance(child, tk.Entry):
-                        child.configure(bg=self.ENTRY_BG, fg=self.FG, insertbackground=self.FG)
-                    elif isinstance(child, tk.Button):
-                        if child == self.toggle_btn:
-                            continue  # toggle_btn handled separately
-                        child.configure(bg=self.ACCENT, fg="black", activebackground=hover_color)
-                        # Re-bind hover dynamically
-                        child.bind("<Enter>", lambda e, b=child: b.config(bg=hover_color))
-                        child.bind("<Leave>", lambda e, b=child: b.config(bg=self.ACCENT))
-                    elif isinstance(child, tk.OptionMenu):
-                        child.configure(bg=self.ENTRY_BG, fg=self.FG, activebackground=self.ACCENT)
-                        child["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
+        # ===== Apply theme to ALL widgets (recursive) =====
+        self.apply_theme_recursive(self.root)
 
-        # Update labels outside frames
+        # ===== Fix Treeview container explicitly =====
+        self.tree.master.configure(bg=self.BG)
+
+        # ===== Ensure labels update =====
         self.total_label.configure(bg=self.BG, fg=self.FG)
         self.insight_label.configure(bg=self.BG, fg=self.FG)
 
-        # Update Treeview again just in case
+        # ===== Ensure Treeview refresh =====
         self.tree.configure(
             background=self.ENTRY_BG,
             foreground=self.FG,
@@ -493,6 +573,50 @@ class ExpenseApp:
         plt.figure()
         plt.pie(amounts, labels=categories, autopct='%1.1f%%', startangle=140)
         plt.title("Expenses Distribution")
+        plt.show()
+
+    def show_timeline_chart(self):
+        import matplotlib.pyplot as plt
+        from collections import defaultdict
+        from datetime import datetime
+
+        data = get_transactions()
+
+        # Safety check
+        if not data:
+            from tkinter import messagebox
+            messagebox.showinfo("No Data", "No transactions to display")
+            return
+
+        # Aggregate daily totals
+        daily_totals = defaultdict(float)
+
+        for row in data:
+            date_str = row[4]
+            amount = row[2]
+
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+            daily_totals[date_obj] += amount
+
+        # Sort dates
+        dates = sorted(daily_totals.keys())
+        amounts = [daily_totals[d] for d in dates]
+
+        # Convert to readable labels
+        labels = [d.strftime("%d-%m") for d in dates]
+
+        # Plot
+        plt.figure()
+        plt.plot(labels, amounts, marker='o')
+
+        plt.title("Expense Timeline")
+        plt.xlabel("Date")
+        plt.ylabel("Amount (₹)")
+
+        plt.xticks(rotation=45)
+        plt.grid()
+        plt.tight_layout()
+
         plt.show()
 
     def restore_database(self):

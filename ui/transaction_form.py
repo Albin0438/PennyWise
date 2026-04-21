@@ -49,7 +49,7 @@ class TransactionForm:
 
             add_transaction(title, amount, category, date)
 
-            messagebox.showinfo("Success", "Expense added!")
+            messagebox.showinfo("Success", "Expense added!", parent=self.top)
 
             self.refresh_callback()
             self.top.destroy()
