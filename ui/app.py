@@ -9,6 +9,8 @@ from utils.backup import backup_database, restore_database
 from utils.csv_handler import import_csv
 from tkinter import filedialog, messagebox
 
+from utils.settings import load_settings, save_settings
+
 class ExpenseApp:
     BG = "#1e1e1e"
     FG = "#ffffff"
@@ -16,6 +18,22 @@ class ExpenseApp:
     ENTRY_BG = "#2c2c2c"
 
     def __init__(self):
+        
+        self.settings = load_settings()
+
+        self.theme = self.settings.get("theme", "dark")
+
+        if self.theme == "light":
+            self.BG = "#ffffff"
+            self.FG = "#000000"
+            self.ENTRY_BG = "#f0f0f0"
+            self.ACCENT = "#00adb5"
+        else:
+            self.BG = "#1e1e1e"
+            self.FG = "#ffffff"
+            self.ENTRY_BG = "#2c2c2c"
+            self.ACCENT = "#00adb5"
+
         # ===== Root window =====
         self.root = tk.Tk()
         self.root.title("PennyWise 💰")
@@ -76,8 +94,42 @@ class ExpenseApp:
         menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
         menu.pack(side="left")
 
-        # ===== SIDEBAR BUTTONS =====
-        self.theme = "dark"
+        # ===== DATE FILTER =====
+        date_filter_frame = tk.Frame(top_frame, bg=self.BG)
+        date_filter_frame.pack(anchor="w", pady=5)
+
+        # Year
+        self.year_var = tk.StringVar(value="All")
+        years = ["All"] + [str(y) for y in range(2020, datetime.now().year + 1)]
+
+        tk.Label(date_filter_frame, text="Year:", bg=self.BG, fg=self.FG).pack(side="left")
+        year_menu = tk.OptionMenu(date_filter_frame, self.year_var, *years,
+                                command=lambda e: self.load_data())
+        year_menu.config(bg=self.ENTRY_BG, fg=self.FG)
+        year_menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
+        year_menu.pack(side="left", padx=5)
+
+        # Month
+        self.month_var = tk.StringVar(value="All")
+        months = ["All"] + [f"{i:02d}" for i in range(1, 13)]
+
+        tk.Label(date_filter_frame, text="Month:", bg=self.BG, fg=self.FG).pack(side="left")
+        month_menu = tk.OptionMenu(date_filter_frame, self.month_var, *months,
+                                command=lambda e: self.load_data())
+        month_menu.config(bg=self.ENTRY_BG, fg=self.FG)
+        month_menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
+        month_menu.pack(side="left", padx=5)
+
+        # Day
+        self.day_var = tk.StringVar(value="All")
+        days = ["All"] + [f"{i:02d}" for i in range(1, 32)]
+
+        tk.Label(date_filter_frame, text="Day:", bg=self.BG, fg=self.FG).pack(side="left")
+        day_menu = tk.OptionMenu(date_filter_frame, self.day_var, *days,
+                                command=lambda e: self.load_data())
+        day_menu.config(bg=self.ENTRY_BG, fg=self.FG)
+        day_menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
+        day_menu.pack(side="left", padx=5)
 
         # --- Data ---
         tk.Label(self.sidebar, text="Data", bg=self.BG, fg=self.FG).pack(pady=5)
@@ -165,6 +217,9 @@ class ExpenseApp:
                                     insertbackground=self.FG)
         self.budget_entry.pack(side="left", padx=5)
 
+        self.budget = self.settings.get("budget", 0)
+        self.budget_entry.insert(0, str(self.budget))
+
         tk.Button(budget_frame, text="Set",
                 command=self.set_budget, bg=self.ACCENT).pack(side="left")
 
@@ -183,6 +238,11 @@ class ExpenseApp:
 
         self.load_data()
 
+        try:
+            self.reload_theme()
+        except Exception as e:
+            print("Theme error:", e)
+
     # ===== Other methods remain the same =====
     def add_expense(self):
         TransactionForm(self.main_frame, self.load_data)
@@ -197,25 +257,46 @@ class ExpenseApp:
         data = get_transactions()
         total = 0
 
-        # Calculate category totals
-        category_totals = {}
+        category_filter = self.category_var.get()
+
+        # ===== FILTERED DATA (IMPORTANT) =====
+        filtered_data = []
+
         for row in data:
+            date_str = row[4]  # "YYYY-MM-DD"
+            year, month, day = date_str.split("-")
+
+            # Date filters
+            if hasattr(self, "year_var") and self.year_var.get() != "All" and self.year_var.get() != year:
+                continue
+
+            if hasattr(self, "month_var") and self.month_var.get() != "All" and self.month_var.get() != month:
+                continue
+
+            if hasattr(self, "day_var") and self.day_var.get() != "All" and self.day_var.get() != day:
+                continue
+
+            # Category filter
+            if category_filter != "All" and row[3] != category_filter:
+                continue
+
+            filtered_data.append(row)
+
+        # ===== CATEGORY TOTALS (based on filtered data) =====
+        category_totals = {}
+        for row in filtered_data:
             category_totals[row[3]] = category_totals.get(row[3], 0) + row[2]
 
-        # Update insight label
         if category_totals:
             top_category = max(category_totals, key=category_totals.get)
-            self.insight_label.config(text=f"Top spending category: {top_category} (₹{category_totals[top_category]})")
+            self.insight_label.config(
+                text=f"Top spending category: {top_category} (₹{category_totals[top_category]})"
+            )
         else:
             self.insight_label.config(text="")
 
-        category_filter = self.category_var.get()
-        for row in data:
-            if category_filter != "All" and row[3] != category_filter:
-                continue
-            
-            from datetime import datetime
-
+        # ===== INSERT INTO TABLE =====
+        for row in filtered_data:
             formatted_date = datetime.strptime(row[4], "%Y-%m-%d").strftime("%d-%m-%Y")
 
             self.tree.insert(
@@ -223,15 +304,16 @@ class ExpenseApp:
                 "end",
                 values=(row[1], f"₹{row[2]}", row[3], formatted_date)
             )
+
             total += row[2]
 
         self.total_label.config(text=f"Total: ₹{total}")
 
+        # ===== BUDGET LOGIC =====
         if hasattr(self, "budget") and self.budget > 0:
             percent = (total / self.budget) * 100
             self.progress["value"] = percent
 
-            # Change color based on usage
             if percent < 70:
                 self.progress.configure(style="green.Horizontal.TProgressbar")
             elif percent < 100:
@@ -243,11 +325,13 @@ class ExpenseApp:
                 self.budget_warning_shown = False
 
             if percent >= 100 and not self.budget_warning_shown:
-                from tkinter import messagebox
                 messagebox.showwarning(
                     "Budget Exceeded",
                     f"⚠️ Budget exceeded!\nTotal: ₹{total} / Budget: ₹{self.budget}"
                 )
+
+                self.shake_window()   # 🌋 ADD THIS
+
                 self.budget_warning_shown = True
 
             elif percent < 100:
@@ -413,6 +497,10 @@ class ExpenseApp:
     def set_budget(self):
         try:
             self.budget = float(self.budget_entry.get())
+
+            self.settings["budget"] = self.budget
+            save_settings(self.settings)
+
             self.load_data()
         except:
             self.budget = 0
@@ -435,12 +523,14 @@ class ExpenseApp:
             self.FG = "#ffffff"
             self.ENTRY_BG = "#2c2c2c"
             self.ACCENT = "#00adb5"
-            self.theme = "dark"
+            self.theme = "dark"   # ✅ ADD THIS LINE
             self.toggle_btn.config(text="Switch to Light Mode")
 
-        # Refresh all widgets
         self.reload_theme()
         self.root.update_idletasks()
+
+        self.settings["theme"] = self.theme
+        save_settings(self.settings)
 
     def apply_theme_recursive(self, widget):
         try:
@@ -662,3 +752,18 @@ class ExpenseApp:
                 self.load_data()
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+
+    def shake_window(self):
+        x = self.root.winfo_x()
+        y = self.root.winfo_y()
+
+        for _ in range(10):  # number of shakes
+            self.root.geometry(f"+{x + 10}+{y}")
+            self.root.update()
+            self.root.after(20)
+
+            self.root.geometry(f"+{x - 10}+{y}")
+            self.root.update()
+            self.root.after(20)
+
+        self.root.geometry(f"+{x}+{y}")
