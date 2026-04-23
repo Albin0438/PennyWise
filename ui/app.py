@@ -63,73 +63,104 @@ class ExpenseApp:
         self.content = tk.Frame(self.main_frame, bg=self.BG)
         self.content.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-        # ===== TOP (Search + Filter) =====
+        # ===== TOP (Search + Filter + Panic) =====
         top_frame = tk.Frame(self.content, bg=self.BG)
         top_frame.pack(fill="x")
 
-        # Search
-        search_frame = tk.Frame(top_frame, bg=self.BG)
-        search_frame.pack(anchor="w", pady=5)
+        # ONE ROW
+        row_frame = tk.Frame(top_frame, bg=self.BG)
+        row_frame.pack(fill="x", pady=5)
+
+        # ===== SEARCH =====
+        search_frame = tk.Frame(row_frame, bg=self.BG)
+        search_frame.pack(side="left")
 
         tk.Label(search_frame, text="Search:", bg=self.BG, fg=self.FG).pack(side="left")
-        self.search_entry = tk.Entry(search_frame, bg=self.ENTRY_BG, fg=self.FG, insertbackground=self.FG)
+
+        self.search_entry = tk.Entry(
+            search_frame,
+            bg=self.ENTRY_BG,
+            fg=self.FG,
+            insertbackground=self.FG
+        )
         self.search_entry.pack(side="left", padx=5)
         self.search_entry.bind("<KeyRelease>", self.live_search)
 
-        tk.Button(search_frame, text="Go", command=self.search_data,
-                bg=self.ACCENT, fg="black").pack(side="left")
+        tk.Button(
+            search_frame,
+            text="Go",
+            command=self.search_data,
+            bg=self.ACCENT,
+            fg="black"
+        ).pack(side="left")
 
-        # Filter
-        filter_frame = tk.Frame(top_frame, bg=self.BG)
-        filter_frame.pack(anchor="w", pady=5)
-
+        # ===== CATEGORY FILTER =====
         categories = ["All", "Food", "Transport", "Shopping", "Other"]
         self.category_var = tk.StringVar(value="All")
 
-        tk.Label(filter_frame, text="Filter Category:", bg=self.BG, fg=self.FG).pack(side="left")
+        filter_frame = tk.Frame(row_frame, bg=self.BG)
+        filter_frame.pack(side="left", padx=15)
 
-        menu = tk.OptionMenu(filter_frame, self.category_var, *categories,
-                            command=lambda e: self.load_data())
+        tk.Label(filter_frame, text="Category:", bg=self.BG, fg=self.FG).pack(side="left")
+
+        menu = tk.OptionMenu(
+            filter_frame,
+            self.category_var,
+            *categories,
+            command=lambda e: self.load_data()
+        )
         menu.config(bg=self.ENTRY_BG, fg=self.FG)
         menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
         menu.pack(side="left")
 
         # ===== DATE FILTER =====
-        date_filter_frame = tk.Frame(top_frame, bg=self.BG)
-        date_filter_frame.pack(anchor="w", pady=5)
+        date_frame = tk.Frame(row_frame, bg=self.BG)
+        date_frame.pack(side="left", padx=15)
 
         # Year
         self.year_var = tk.StringVar(value="All")
         years = ["All"] + [str(y) for y in range(2020, datetime.now().year + 1)]
 
-        tk.Label(date_filter_frame, text="Year:", bg=self.BG, fg=self.FG).pack(side="left")
-        year_menu = tk.OptionMenu(date_filter_frame, self.year_var, *years,
+        tk.Label(date_frame, text="Year:", bg=self.BG, fg=self.FG).pack(side="left")
+        year_menu = tk.OptionMenu(date_frame, self.year_var, *years,
                                 command=lambda e: self.load_data())
         year_menu.config(bg=self.ENTRY_BG, fg=self.FG)
         year_menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
-        year_menu.pack(side="left", padx=5)
+        year_menu.pack(side="left", padx=3)
 
         # Month
         self.month_var = tk.StringVar(value="All")
         months = ["All"] + [f"{i:02d}" for i in range(1, 13)]
 
-        tk.Label(date_filter_frame, text="Month:", bg=self.BG, fg=self.FG).pack(side="left")
-        month_menu = tk.OptionMenu(date_filter_frame, self.month_var, *months,
+        tk.Label(date_frame, text="Month:", bg=self.BG, fg=self.FG).pack(side="left")
+        month_menu = tk.OptionMenu(date_frame, self.month_var, *months,
                                 command=lambda e: self.load_data())
         month_menu.config(bg=self.ENTRY_BG, fg=self.FG)
         month_menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
-        month_menu.pack(side="left", padx=5)
+        month_menu.pack(side="left", padx=3)
 
         # Day
         self.day_var = tk.StringVar(value="All")
         days = ["All"] + [f"{i:02d}" for i in range(1, 32)]
 
-        tk.Label(date_filter_frame, text="Day:", bg=self.BG, fg=self.FG).pack(side="left")
-        day_menu = tk.OptionMenu(date_filter_frame, self.day_var, *days,
+        tk.Label(date_frame, text="Day:", bg=self.BG, fg=self.FG).pack(side="left")
+        day_menu = tk.OptionMenu(date_frame, self.day_var, *days,
                                 command=lambda e: self.load_data())
         day_menu.config(bg=self.ENTRY_BG, fg=self.FG)
         day_menu["menu"].config(bg=self.ENTRY_BG, fg=self.FG)
-        day_menu.pack(side="left", padx=5)
+        day_menu.pack(side="left", padx=3)
+
+        # ===== 🚨 PANIC BUTTON =====
+        self.panic_btn = tk.Button(
+            row_frame,
+            text="🚨 Panic",
+            command=self.show_panic_report,
+            bg="red",
+            fg="white",
+            font=("Arial", 10, "bold"),
+            cursor="hand2"
+        )
+        self.panic_btn.pack(side="right", padx=10)
 
         # --- Data ---
         tk.Label(self.sidebar, text="Data", bg=self.BG, fg=self.FG).pack(pady=5)
@@ -251,51 +282,36 @@ class ExpenseApp:
         self.root.mainloop()
     
     def load_data(self):
+        # Clear table
         for row in self.tree.get_children():
             self.tree.delete(row)
 
         data = get_transactions()
         total = 0
-
-        category_filter = self.category_var.get()
-
-        # ===== FILTERED DATA (IMPORTANT) =====
         filtered_data = []
 
+        # ===== FILTERING =====
         for row in data:
-            date_str = row[4]  # "YYYY-MM-DD"
+            date_str = row[4]
             year, month, day = date_str.split("-")
 
             # Date filters
-            if hasattr(self, "year_var") and self.year_var.get() != "All" and self.year_var.get() != year:
+            if self.year_var.get() != "All" and self.year_var.get() != year:
                 continue
 
-            if hasattr(self, "month_var") and self.month_var.get() != "All" and self.month_var.get() != month:
+            if self.month_var.get() != "All" and self.month_var.get() != month:
                 continue
 
-            if hasattr(self, "day_var") and self.day_var.get() != "All" and self.day_var.get() != day:
+            if self.day_var.get() != "All" and self.day_var.get() != day:
                 continue
 
             # Category filter
-            if category_filter != "All" and row[3] != category_filter:
+            if self.category_var.get() != "All" and row[3] != self.category_var.get():
                 continue
 
             filtered_data.append(row)
 
-        # ===== CATEGORY TOTALS (based on filtered data) =====
-        category_totals = {}
-        for row in filtered_data:
-            category_totals[row[3]] = category_totals.get(row[3], 0) + row[2]
-
-        if category_totals:
-            top_category = max(category_totals, key=category_totals.get)
-            self.insight_label.config(
-                text=f"Top spending category: {top_category} (₹{category_totals[top_category]})"
-            )
-        else:
-            self.insight_label.config(text="")
-
-        # ===== INSERT INTO TABLE =====
+        # ===== INSERT DATA + TOTAL =====
         for row in filtered_data:
             formatted_date = datetime.strptime(row[4], "%Y-%m-%d").strftime("%d-%m-%Y")
 
@@ -309,11 +325,25 @@ class ExpenseApp:
 
         self.total_label.config(text=f"Total: ₹{total}")
 
+        # ===== SIMPLE HOME INSIGHT (ONLY TOP CATEGORY) =====
+        category_totals = {}
+        for row in filtered_data:
+            category_totals[row[3]] = category_totals.get(row[3], 0) + row[2]
+
+        if category_totals:
+            top_category = max(category_totals, key=category_totals.get)
+            self.insight_label.config(
+                text=f"Top spending: {top_category} (₹{category_totals[top_category]})"
+            )
+        else:
+            self.insight_label.config(text="")
+
         # ===== BUDGET LOGIC =====
         if hasattr(self, "budget") and self.budget > 0:
             percent = (total / self.budget) * 100
             self.progress["value"] = percent
 
+            # Progress color
             if percent < 70:
                 self.progress.configure(style="green.Horizontal.TProgressbar")
             elif percent < 100:
@@ -321,6 +351,15 @@ class ExpenseApp:
             else:
                 self.progress.configure(style="red.Horizontal.TProgressbar")
 
+            # 🚨 Panic button color (NEW UX)
+            if percent >= 100:
+                self.panic_btn.config(bg="red")
+            elif percent >= 80:
+                self.panic_btn.config(bg="orange")
+            else:
+                self.panic_btn.config(bg="green")
+
+            # Budget warning
             if not hasattr(self, "budget_warning_shown"):
                 self.budget_warning_shown = False
 
@@ -330,7 +369,7 @@ class ExpenseApp:
                     f"⚠️ Budget exceeded!\nTotal: ₹{total} / Budget: ₹{self.budget}"
                 )
 
-                self.shake_window()   # 🌋 ADD THIS
+                self.shake_window()  # 🌋 effect
 
                 self.budget_warning_shown = True
 
@@ -390,31 +429,57 @@ class ExpenseApp:
         if not query:
             self.load_data()
             return
-        
+
+        # Clear table
         for row in self.tree.get_children():
             self.tree.delete(row)
 
         data = get_transactions()
         total = 0
 
-        for row in data:
-            if query in row[1].lower() or query in str(row[3]).lower():
-                formatted_date = datetime.strptime(row[4], "%Y-%m-%d").strftime("%d-%m-%Y")
+        filtered_data = []
 
-                self.tree.insert(
-                    "",
-                    "end",
-                    values=(row[1], f"₹{row[2]}", row[3], formatted_date)
-                )
-                total += row[2]
+        for row in data:
+            date_str = row[4]
+            year, month, day = date_str.split("-")
+
+            # ===== DATE FILTER =====
+            if hasattr(self, "year_var") and self.year_var.get() != "All" and self.year_var.get() != year:
+                continue
+
+            if hasattr(self, "month_var") and self.month_var.get() != "All" and self.month_var.get() != month:
+                continue
+
+            if hasattr(self, "day_var") and self.day_var.get() != "All" and self.day_var.get() != day:
+                continue
+
+            # ===== CATEGORY FILTER =====
+            if hasattr(self, "category_var") and self.category_var.get() != "All" and row[3] != self.category_var.get():
+                continue
+
+            # ===== SEARCH FILTER =====
+            if query in row[1].lower() or query in str(row[3]).lower():
+                filtered_data.append(row)
+
+        # ===== INSERT DATA =====
+        for row in filtered_data:
+            formatted_date = datetime.strptime(row[4], "%Y-%m-%d").strftime("%d-%m-%Y")
+
+            self.tree.insert(
+                "",
+                "end",
+                values=(row[1], f"₹{row[2]}", row[3], formatted_date)
+            )
+
+            total += row[2]
 
         self.total_label.config(text=f"Total: ₹{total}")
 
-        # Update top category based on filtered results
+        # ===== CATEGORY TOTALS (FILTERED) =====
+        # ===== SIMPLE INSIGHT (HOME SCREEN) =====
         category_totals = {}
-        for row in data:
-            if query in row[1].lower() or query in str(row[3]).lower():
-                category_totals[row[3]] = category_totals.get(row[3], 0) + row[2]
+        for row in filtered_data:
+            category_totals[row[3]] = category_totals.get(row[3], 0) + row[2]
 
         if category_totals:
             top_category = max(category_totals, key=category_totals.get)
@@ -767,3 +832,211 @@ class ExpenseApp:
             self.root.after(20)
 
         self.root.geometry(f"+{x}+{y}")
+
+    def generate_smart_insights(self, data, total):
+        if not data or self.budget == 0:
+            return ""
+
+        from collections import defaultdict
+        from datetime import datetime
+
+        # Category totals
+        category_totals = defaultdict(float)
+        daily_totals = defaultdict(float)
+
+        for row in data:
+            category_totals[row[3]] += row[2]
+
+            date_obj = datetime.strptime(row[4], "%Y-%m-%d")
+            daily_totals[date_obj] += row[2]
+
+        insights = []
+
+        # 1. Budget usage
+        percent = (total / self.budget) * 100
+
+        if percent >= 100:
+            insights.append("⚠️ You exceeded your budget!")
+        elif percent >= 80:
+            insights.append("⚠️ You're close to your budget limit.")
+        elif percent >= 50:
+            insights.append("⚠️ You've used over half your budget.")
+
+        # 2. Top category warning
+        top_category = max(category_totals, key=category_totals.get)
+        top_percent = (category_totals[top_category] / total) * 100
+
+        if top_percent > 40:
+            insights.append(f"💡 {top_category} takes {top_percent:.0f}% of your spending. Try reducing it.")
+
+        # 3. Daily average vs today
+        dates = sorted(daily_totals.keys())
+        if dates:
+            avg_daily = total / len(dates)
+            today_spend = daily_totals[dates[-1]]
+
+            if today_spend > avg_daily * 1.5:
+                insights.append("📈 Today’s spending is much higher than your average.")
+
+        # 4. Burn rate (simple prediction)
+        if dates:
+            days_passed = len(dates)
+            daily_avg = total / days_passed
+            remaining = self.budget - total
+
+            if daily_avg > 0:
+                days_left = remaining / daily_avg
+                if days_left < 5:
+                    insights.append("⚠️ At this rate, budget may run out soon.")
+
+        return " | ".join(insights)
+
+    def generate_smart_insights(self, data, total):
+        if not data or self.budget == 0:
+            return "No sufficient data to generate insights."
+
+        from collections import defaultdict
+        from datetime import datetime
+
+        category_totals = defaultdict(float)
+        daily_totals = defaultdict(float)
+
+        for row in data:
+            category_totals[row[3]] += row[2]
+            date_obj = datetime.strptime(row[4], "%Y-%m-%d")
+            daily_totals[date_obj] += row[2]
+
+        insight = []
+
+        # ===== 1. Budget Analysis =====
+        percent = (total / self.budget) * 100
+
+        insight.append(f"You have spent ₹{total:.2f} out of ₹{self.budget:.2f} ({percent:.1f}% of your budget).")
+
+        if percent >= 100:
+            insight.append("Your spending has exceeded the allocated budget, indicating a need for immediate financial adjustment.")
+        elif percent >= 80:
+            insight.append("You are approaching your budget limit. It is advisable to reduce non-essential expenses.")
+        elif percent >= 50:
+            insight.append("You have used more than half of your budget. Monitor your spending carefully.")
+
+        # ===== 2. Category Analysis =====
+        if total > 0:
+            top_category = max(category_totals, key=category_totals.get)
+            top_amount = category_totals[top_category]
+            top_percent = (top_amount / total) * 100
+
+            insight.append(
+                f"The highest spending category is '{top_category}', contributing ₹{top_amount:.2f} ({top_percent:.1f}% of total spending)."
+            )
+
+            if top_percent > 40:
+                insight.append(
+                    f"This indicates a concentration of spending in '{top_category}'. Reducing expenses in this category can significantly improve your financial balance."
+                )
+
+        # ===== 3. Daily Behavior =====
+        dates = sorted(daily_totals.keys())
+        if dates:
+            avg_daily = total / len(dates)
+            last_day_spend = daily_totals[dates[-1]]
+
+            insight.append(
+                f"Your average daily spending is approximately ₹{avg_daily:.2f}."
+            )
+
+            if last_day_spend > avg_daily * 1.5:
+                insight.append(
+                    "Recent spending is significantly higher than your average, which may indicate impulsive or unplanned expenses."
+                )
+
+        # ===== 4. Future Prediction =====
+        if dates:
+            days_passed = len(dates)
+            daily_avg = total / days_passed
+            remaining_budget = self.budget - total
+
+            if daily_avg > 0:
+                days_left = remaining_budget / daily_avg
+
+                insight.append(
+                    f"At your current spending rate, your remaining budget may last approximately {days_left:.1f} more days."
+                )
+
+                if days_left < 5:
+                    insight.append(
+                        "This suggests that your budget may run out soon. Immediate reduction in spending is recommended."
+                    )
+
+        # ===== 5. Action Advice =====
+        insight.append(
+            "To maintain financial stability, consider setting a daily spending limit, prioritizing essential expenses, and reviewing your high-cost categories regularly."
+        )
+
+        return "\n\n".join(insight)
+    
+    def show_panic_report(self):
+        data = get_transactions()
+
+        # Apply SAME filtering logic
+        filtered_data = []
+
+        for row in data:
+            date_str = row[4]
+            year, month, day = date_str.split("-")
+
+            if hasattr(self, "year_var") and self.year_var.get() != "All" and self.year_var.get() != year:
+                continue
+
+            if hasattr(self, "month_var") and self.month_var.get() != "All" and self.month_var.get() != month:
+                continue
+
+            if hasattr(self, "day_var") and self.day_var.get() != "All" and self.day_var.get() != day:
+                continue
+
+            if hasattr(self, "category_var") and self.category_var.get() != "All" and row[3] != self.category_var.get():
+                continue
+
+            filtered_data.append(row)
+
+        total = sum(row[2] for row in filtered_data)
+
+        report = self.generate_smart_insights(filtered_data, total)
+
+        from tkinter import messagebox
+        messagebox.showinfo("📊 Financial Analysis", report)
+    
+    def show_panic_report(self):
+        data = get_transactions()
+
+        total = sum(row[2] for row in data)
+
+        category_totals = {}
+        for row in data:
+            category_totals[row[3]] = category_totals.get(row[3], 0) + row[2]
+
+        if not category_totals:
+            messagebox.showinfo("Panic Report", "No data available")
+            return
+
+        top_category = max(category_totals, key=category_totals.get)
+
+        msg = f"Total Spending: ₹{total}\n"
+        msg += f"Top Category: {top_category}\n\n"
+
+        if total > self.budget:
+            msg += "⚠️ You exceeded your budget!\n\n"
+            msg += "Suggestions:\n"
+            msg += "- Reduce spending in top category\n"
+            msg += "- Avoid unnecessary purchases\n"
+            msg += "- Set daily spending limit\n"
+        elif total > self.budget * 0.8:
+            msg += "⚠️ Warning: Near budget limit\n\n"
+            msg += "Suggestions:\n"
+            msg += "- Cut down small expenses\n"
+            msg += "- Track daily spending\n"
+        else:
+            msg += "✅ You are within budget\n"
+            msg += "Keep it up!"
+
+        messagebox.showinfo("🚨 Panic Report", msg)
